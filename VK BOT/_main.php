@@ -4,10 +4,10 @@ require_once('_config.php');
 
 // MYSQL
 
-define("HOST","emirates7.beget.tech"); // Host
-define("USER","emirates7_test"); // User
-define("PASSWORD","Exampledev123"); // Password
-define("DB","emirates7_test"); // DB
+define("HOST",""); // Host
+define("USER",""); // User
+define("PASSWORD",""); // Password
+define("DB",""); // DB
 
 if($user_id <= 0)
     exit;
