@@ -1,0 +1,45 @@
+#if defined _vk_security_lang_included
+	#endinput
+#endif
+#define _vk_security_lang_included
+
+#if !defined VK_COLOR
+	#define VK_COLOR	"{0099CC}"
+#endif
+
+#if defined VK_LANG_VERSION
+	#undef VK_LANG_VERSION
+#endif
+#define VK_LANG_VERSION	(1)
+
+new
+	DIALOG_TITLE[] = !""VK_COLOR"VK Protection",
+	CONFIRMATION_MSGBOX[] = !"{ffffff}This type of protection for your game account will allow you to comfortably confirm / block the authorization of your game profile.\n\n\
+        {00FF7F}+ {ffffff}Convenient confirmation via private messages from the community using buttons.\n\
+        {00FF7F}+ {ffffff}The ability to block the entrance of a potential attacker\n\
+        {00FF7F}+ {ffffff}Long term login history.\n\
+        {00FF7F}+ {ffffff}If you want to continue linking, click \"Next\"\n\
+        Otherwise, just press \"Cancel\"",
+	CONFIRMATION_INPUT[] = "{ffffff}To link your VK profile to a game account:\n\n\
+		{00FF7F}+ {ffffff}Enter nickname and code: {ffcc00}%i {ffffff}\n\
+		in private messages with our official group, and after the procedure you need to press \"Next\"\n\n\
+		For example: Ivan_Ivanov 873211\n\
+		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
+	CONFIRMATION_DECLINE[] = "{ffffff}To unlink your VK profile:\n\n\
+		{00FF7F}ñ {ffffff}Enter nickname and code: {ffcc00}%i {ffffff}\n\
+		in private messages with our official group, and after the procedure you need to press \"Next\"\n\n\
+		For example: Ivan_Ivanov 873211\n\
+		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
+	BUTTON_YES[] = !"Next",
+	BUTTON_NO[] = !"Cancel",
+	MAIN_PANEL_MSG[] =  "{00FF7F}ª {ffffff}Type: "VK_COLOR"%s\n{00FF7F}ª {ffffff}Change protection type\n{ff0000}ª {ffffff}Disable protection",
+	IS_NOT_AVAILABLE[] = !"The connection to the intermediate server is interrupted or unavailable. Inform the administration!",
+	T_OPERATOR_TYPE_1[] = "Always ask",
+	T_OPERATOR_TYPE_2[] = "Prompt when changing IP address",
+	ACTIVATION_MSG[] = !""VK_COLOR"VK | {ffffff}You have successfully linked VK protection.",
+	DECLINE_SCM[] = !""VK_COLOR"VK | {ffffff}You have successfully canceled this action",
+	UNLINK[] = !""VK_COLOR"VK | {ffffff}You have successfully unlinked your account!",
+	SPECIAL_BUTTON[] = !"Œ ",
+	SUCESSFULLY_AUTH[] = !""VK_COLOR"VK | {ffffff}You have confirmed login to your account and logged in successfully",
+	BLOCKED_AUTH[] = !""VK_COLOR"VK | {ffffff}The login was blocked by the account owner, the session was dropped.",
+	D_VK_WINDOW[] = !"{0099CC}VK Security{ffffff} ñ a system that is aimed at ensuring the security of your account.\n\nConfirm the entry by clicking the corresponding button in the dialog with the group.\n(The dialog will close automatically after confirmation)";
