@@ -21,14 +21,14 @@ new
         {00FF7F}+ {ffffff}If you want to continue linking, click \"Next\"\n\
         Otherwise, just press \"Cancel\"",
 	CONFIRMATION_INPUT[] = "{ffffff}To link your VK profile to a game account:\n\n\
-		{00FF7F}+ {ffffff}Enter /link nickname and code: {ffcc00}%i {ffffff}\n\
+		{00FF7F}+ {ffffff}Enter nickname and code: {ffcc00}%i {ffffff}\n\
 		in private messages with our official group, and after the procedure you need to press \"Next\"\n\n\
-		For example: /link Ivan_Ivanov 873211\n\
+		For example: Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
 	CONFIRMATION_DECLINE[] = "{ffffff}To unlink your VK profile:\n\n\
-		{00FF7F}– {ffffff}Enter /unlink nickname and code: {ffcc00}%i {ffffff}\n\
+		{00FF7F}– {ffffff}Enter nickname and code: {ffcc00}%i {ffffff}\n\
 		in private messages with our official group, and after the procedure you need to press \"Next\"\n\n\
-		For example: /unlink Ivan_Ivanov 873211\n\
+		For example: Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
 	BUTTON_YES[] = !"Next",
 	BUTTON_NO[] = !"Cancel",
