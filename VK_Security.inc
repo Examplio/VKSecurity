@@ -62,13 +62,18 @@ Copyright (c) 2021 Viktor Kasko
     #define VK_COLOR    "{0099CC}"
 #endif
 
+#if !defined MAX_IP_LENGTH
+    #define MAX_IP_LENGTH       16
+#endif
+
 
 static
-    static_VkActivated[MAX_PLAYERS char] = {0, ...},
-    static_VK_ID[MAX_PLAYERS] = {0, ...},
-    static_Timer[MAX_PLAYERS],
-    static_name[MAX_PLAYERS][MAX_PLAYER_NAME],
-    static_VkType[MAX_PLAYERS];
+    static_VkActivated [ MAX_PLAYERS char ] = {0, ...},
+    static_VK_ID [ MAX_PLAYERS ] = {0, ...},
+    static_Timer[MAX_PLAYERS char],
+    static_name [ MAX_PLAYERS ] [ MAX_PLAYER_NAME ],
+    static_ip [ MAX_PLAYERS ] [ MAX_IP_LENGTH ],
+    static_VkType [ MAX_PLAYERS char ] = {0, ...};
 
 static_enum {
     D_MAIN_PANEL,
@@ -80,36 +85,48 @@ static_enum {
 
 // Stocks
 
-stock VK_ShowMain(playerid) {
+stock VK_ShowMain ( playerid )  {
+
+    if(!static_VkActivated { playerid } )
+        return SendClientMessage(playerid,-1,DONT_HAVE);
 
     static
         message_string[sizeof MAIN_PANEL_MSG + sizeof T_OPERATOR_TYPE_2];
     
-    format(message_string,sizeof(message_string),MAIN_PANEL_MSG,static_VkType [ playerid ] == 0 ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2);
+    format(message_string,sizeof(message_string),MAIN_PANEL_MSG, 0 == static_VkType { playerid } ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2 ) ;
 
     return ShowPlayerDialog(playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
 }
 
-stock VK_DEL_SESSION(playerid) {
+stock VK_DEL_SESSION ( playerid )  {
 
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
-    format(http_string, sizeof(http_string), "%s/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ]);
+    format(http_string, sizeof(http_string), "%s/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ] ) ;
 
     return HTTP(playerid, 2, http_string, "", "");
 }
 
 stock VK_ShowConfirmation( playerid ) {
+
     if( static_VkActivated { playerid } )
-        return 1;
+        return SendClientMessage(playerid,-1,HAVE);
     
     return ShowPlayerDialog(playerid,D_VK_CONFIRMATION,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,CONFIRMATION_MSGBOX,BUTTON_YES,BUTTON_NO);
 }
 
 stock VK_ShowAuthWindow ( playerid ) {
     if( !static_VkActivated { playerid } )
-        return true;
+        return SendClientMessage(playerid,-1,DONT_HAVE);
+
+    static
+        static_temp_ip[MAX_IP_LENGTH];
+
+    GetPlayerIp(playerid, static_temp_ip, MAX_IP_LENGTH);
+
+    if(!strcmp( static_temp_ip, static_ip [ playerid ] ) && static_VkType { playerid } == 1)
+        return 0;
 
     static
         http_string[255 + 35 /* 255 - max domain length*/];
@@ -117,10 +134,8 @@ stock VK_ShowAuthWindow ( playerid ) {
     format(http_string, sizeof(http_string), "%s/_handler.php?name=%s&to=%d",DOMAIN,static_name [ playerid ], static_VK_ID [ playerid ]);
 
     HTTP(playerid, 2, http_string, "", "_Info");
-    
-    ShowPlayerDialog(playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"");
 
-    return 1;
+    return ShowPlayerDialog(playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"");
 }
 // some publics 
 
@@ -135,10 +150,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                 return true;
             
             switch(listitem) {
-                case 0: return VK_ShowMain(playerid);
+                case 0: return VK_ShowMain ( playerid ) ;
                 case 1: {
-                    static_VkType [ playerid ] = !static_VkType [ playerid ];
-                    return VK_ShowMain(playerid);
+                    static_VkType { playerid } = !static_VkType { playerid };
+                    return VK_ShowMain ( playerid ) ;
                 }
                 case 2: {
                     if(!static_VkActivated { playerid })
@@ -215,21 +230,26 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                     _uID;
                 
                 cache_get_value_name_int(0,!"u_userid",_uID);
+                
+                cache_delete ( qHandle ) ;
 
                 if(!_uID)
                 {
-                    cache_delete(qHandle);
-
                     static_VkActivated { playerid } = 0;
+
                     static_VK_ID [ playerid ] = 0;
-                    static_VkType [ playerid ] = 0;
+
+                    static_VkType { playerid } = 0;
 
                     return SendClientMessage(playerid,-1,UNLINK);
-                } else {
-                    cache_delete(qHandle);
+
+                } 
+                else {
                     goto dialog_decline;
+                    
                     return 1;
                 }
+
             #else
                 #if defined cache_get_row_int
                     new
@@ -240,18 +260,23 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
                     _uID = cache_get_field_content_int(0,!"u_userid");
 
+                    cache_delete ( qHandle ) ;
+
                     if(!_uID)
                     {
-                        cache_delete(qHandle);
 
                         static_VkActivated { playerid } = 0;
+                        
                         static_VK_ID [ playerid ] = 0;
-                        static_VkType [ playerid ] = 0;
+
+                        static_VkType { playerid } = 0;
 
                         return SendClientMessage(playerid,-1,UNLINK);
-                    } else {
-                        cache_delete(qHandle);
+
+                    } 
+                    else {
                         goto dialog_decline;
+
                         return 1;
                     }
                 #endif
@@ -332,7 +357,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
                 if(!_uID)
                 {
-                    cache_delete(qHandle);
+                    cache_delete ( qHandle ) ;
 
                     goto d_dialog;
 
@@ -340,8 +365,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                 }
                 
                 static_VkActivated { playerid } = 1;
+
                 static_VK_ID [ playerid ] = _uID;
-                static_VkType [ playerid ] = 0;
+
+                static_VkType { playerid } = 0;
 
             #else
                 #if defined cache_get_row_int
@@ -354,17 +381,25 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                     _uID = cache_get_field_content_int(0,!"u_userid");
 
                     if(!_uID)
-                        return cache_delete(qHandle), goto return_dialog;
+                    {
+                        cache_delete ( qHandle ) ;
+
+                        goto d_dialog;
+
+                        return 1;
+                    }
                 
                     static_VkActivated { playerid } = 1;
+
                     static_VK_ID [ playerid ] = _uID;
-                    static_VkType [ playerid ] = 0;
+
+                    static_VkType { playerid } = 0;
                 #endif
             #endif
 
             SendClientMessage(playerid,-1,ACTIVATION_MSG);
 
-            return cache_delete(qHandle);
+            return cache_delete ( qHandle ) ;
         }
     }
 
@@ -379,20 +414,25 @@ public OnGameModeInit()
         SECURITY_OnGameModeInit();
     #endif
 
+    print("-------------------------------------") ;
+	print("VK Security by Examplio loaded! ") ;
+	printf("Version: %i.0 ", V_VERSION) ;
+	print("-------------------------------------") ;
+
     #if !defined mysql_reconnect
-        mysql_query(MYSQL_DEFAULT_HANDLE, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) CHARACTER SET cp1251 NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT '0',`u_code` int(11) NOT NULL DEFAULT '0',`u_type` int(11) NOT NULL DEFAULT '0') ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
+        mysql_query(MYSQL_DEFAULT_HANDLE, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
     #else
         #if defined cache_get_row_int
-            mysql_query(1, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) CHARACTER SET cp1251 NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT '0',`u_code` int(11) NOT NULL DEFAULT '0',`u_type` int(11) NOT NULL DEFAULT '0') ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
+            mysql_query(1, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
         #endif
     #endif
     return 1;
 }
 
-public OnPlayerConnect(playerid)
+public OnPlayerConnect ( playerid ) 
 {
     #if defined SECURITY_OnPlayerConnect
-        SECURITY_OnPlayerConnect(playerid);
+        SECURITY_OnPlayerConnect ( playerid ) ;
     #endif
 
     static
@@ -407,15 +447,20 @@ public OnPlayerConnect(playerid)
             Cache:qHandle = mysql_query(MYSQL_DEFAULT_HANDLE,query_string);
 
         if(cache_num_rows()) {
-            cache_get_value_name_int(0,!"u_type",static_VkType [ playerid ]);
+
+            cache_get_value_name_int(0,!"u_type",static_VkType { playerid });
+
             cache_get_value_name_int(0,!"u_userid",static_VK_ID [ playerid ]);
+
+            cache_get_value_name(0, !"u_ip", static_ip [ playerid ] , MAX_IP_LENGTH);
             
             if(static_VK_ID [ playerid ] != 0)
                 static_VkActivated{playerid} = 1;
+
         } else {
             format(query_string,sizeof(query_string),"\
                 INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
-                 static_name [ playerid ] 
+                static_name [ playerid ] 
             );
             mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
         }
@@ -425,11 +470,16 @@ public OnPlayerConnect(playerid)
                 Cache:qHandle = mysql_query(1,query_string);
 
             if(cache_num_rows()) {
-                static_VkType [ playerid ] = cache_get_field_content_int(0,!"u_type");
+
+                static_VkType { playerid } = cache_get_field_content_int(0,!"u_type");
+
                 static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid");
+
+                cache_get_field_content(0, !"u_ip", static_ip [ playerid ] , 1 , MAX_IP_LENGTH);
 
                 if(static_VK_ID [ playerid ] != 0)
                     static_VkActivated{playerid} = 1;
+                    
             } else {
                 format(query_string,sizeof(query_string),"\
                     INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
@@ -440,7 +490,7 @@ public OnPlayerConnect(playerid)
         #endif
     #endif
 
-    return cache_delete(qHandle);            
+    return cache_delete ( qHandle ) ;            
 }
 
 public OnPlayerDisconnect(playerid, reason) {
@@ -448,23 +498,29 @@ public OnPlayerDisconnect(playerid, reason) {
         SECURITY_OnPlayerDisconnect(playerid,reason);
     #endif
 
-    static_VkType [ playerid ] = 0;
+    VK_DEL_SESSION ( playerid ) ;
+
+    static_VkType { playerid } = 0;
     static_VK_ID [ playerid ] = 0;
+
     static_VkActivated { playerid } = 0;
-    KillTimer ( static_Timer [ playerid ] ) ;
+    KillTimer ( static_Timer { playerid } ) ;
+
     static_name [ playerid ] [ 0 ] = EOS;
+    static_ip [ playerid ] [ 0 ] = EOS;
+
 
     return 1;
 }
 
 // Forward`s
 forward SECURITY_OnPlayerDisconnect(playerid,reason);
-forward SECURITY_OnPlayerConnect(playerid);
+forward SECURITY_OnPlayerConnect ( playerid ) ;
 forward SECURITY_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
 forward SECURITY_OnGameModeInit();
 //Timer and HTTP receiver
-forward _RealTime_Info(playerid);
-public _RealTime_Info(playerid) {
+forward _RealTime_Info ( playerid ) ;
+public _RealTime_Info ( playerid )  {
 
     static
         http_string[255 + 35 /* 255 - max domain length*/];
@@ -477,15 +533,40 @@ forward _Info_(index, response_code, data[]);
 public _Info_(index, response_code, data[]) {
 
     if(response_code >= 200 && response_code <= 299 && !strcmp(data,"1")) {
-        ShowPlayerDialog(index, -1, 0, " ", " ", " ", " ");
-        SendClientMessage(index, -1, SUCESSFULLY_AUTH);
-        VK_DEL_SESSION(index);
-        return KillTimer( static_Timer [ index ] ) ;
+
+        ShowPlayerDialog(index, -1, 0, " ", " ", " ", " "); // hide all dialogs
+
+        SendClientMessage(index, -1, SUCESSFULLY_AUTH); // scm
+
+        GetPlayerIp(index, static_ip [ index ], MAX_IP_LENGTH); // get ip
+
+        static const qString[] = "UPDATE `vk_security` SET `u_ip` = %s' WHERE `u_name` = '%s'";
+
+        static
+            query_string [ sizeof qString + MAX_PLAYER_NAME + MAX_IP_LENGTH ];
+
+        format(query_string,sizeof(query_string),qString, static_ip [ index ] , static_name [ index ] ) ;
+
+        #if !defined mysql_reconnect
+            mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
+        #else
+            #if defined cache_get_row_int
+                mysql_tquery(1,query_string,"","");
+            #endif
+        #endif
+
+        VK_DEL_SESSION(index); // Delete a session
+
+        return KillTimer( static_Timer { index } ) ;
     }
     else if(response_code >= 200 && response_code <= 299 && !strcmp(data,"-1")) {
+
         SendClientMessage(index, -1, BLOCKED_AUTH);
-        KillTimer( static_Timer [ index ] ) ;
+
+        KillTimer( static_Timer { index } ) ;
+
         VK_DEL_SESSION(index);
+
         return Kick(index);
     }
     return 1;
@@ -493,8 +574,9 @@ public _Info_(index, response_code, data[]) {
 forward _Info(index, response_code, data[]);
 public _Info(index, response_code, data[]) {
 
-    if(response_code == 200 && !strcmp(data,"ok")) {
-        static_Timer [ index ] = SetTimerEx("_RealTime_Info",700,1,"i",index);
+    if(response_code >= 200 && response_code <= 299 && !strcmp(data,"ok")) {
+
+        static_Timer { index } = SetTimerEx("_RealTime_Info",700,1,"i",index);
     }
     else SendClientMessage(index,-1,IS_NOT_AVAILABLE);
 }
