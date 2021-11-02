@@ -13,7 +13,3 @@ Convenient buttons allow you to perfectly confirm or block the entrances to the 
 #### VK_ShowAuthWindow(playerid) 
 > Displays a dialogue for the person to confirm the login with a request to the bot (cannot be hidden until the moment of confirmation)
 > + playerid - ID of the person who needs to display the auth
-
-# INSTALLING
-+ Community token required with permissions: **messages**
-+ VK PHP BOT required a personal web site.
