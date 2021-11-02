@@ -4,10 +4,10 @@ require_once('_config.php');
 
 // MYSQL
 
-define("HOST",""); // Host
-define("USER",""); // User
-define("PASSWORD",""); // Password
-define("DB",""); // DB
+define("host","host_change_me"); // Host
+define("user","user_change_me"); // User
+define("password","password_change_me"); // Password
+define("db","DB_changeme"); // DB
 
 if($user_id <= 0)
     exit;
@@ -15,7 +15,7 @@ if($user_id <= 0)
 // EN: Variables | RU: Переменные
 
 $cmd = getCmd();
-$args = getMessage(2);
+$args = getMessage(3);
 
 // EN: Commands | RU: Команды
 
@@ -53,7 +53,7 @@ if($payload['command'] == 'block') { // EN: Calls when user press 'Block' | RU: 
     exit;
 }
 
-if($args[0] != '' && is_numeric($args[1]) && $args[1] >= 100000 && $args[1] <= 999999) {
+if($args[0] == '/link' && $args[1] != '' && is_numeric($args[2]) && $args[2] >= 100000 && $args[2] <= 999999) {
 
     $sql_connection = mysqli_connect(HOST,USER,PASSWORD,DB);
     mysqli_select_db($sql_connection,DB);
@@ -63,29 +63,51 @@ if($args[0] != '' && is_numeric($args[1]) && $args[1] >= 100000 && $args[1] <= 9
         exit();
     }
 
-    $squery = mysqli_query($sql_connection,"SELECT * FROM `vk_security` WHERE `u_name` = '{$args[0]}' LIMIT 1");
+    $squery = mysqli_query($sql_connection,"SELECT * FROM `vk_security` WHERE `u_name` = '{$args[1]}' LIMIT 1");
 
     if(!mysqli_num_rows($squery))
         exit;
     
     $qdata = mysqli_fetch_row($squery);
 
-    if($qdata[1] != 0) {
-        if($args[1] == $qdata[2]) {
-            mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '0',`u_code` = '0' WHERE `u_name` = '{$args[0]}'");
-
-            $vk->sendMessage($user_id,"Вы успешно отвязали профиль ВКонтакте от своего игрового аккаунта 🚫");
-        }
-        exit;
-    }
-
-    if($args[0] == $qdata[0] && $args[1] == $qdata[2]) {
-        mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '{$user_id}',`u_code` = '0' WHERE `u_name` = '{$args[0]}'");
+    if($args[1] == $qdata[0] && $args[2] == $qdata[2]) {
+        mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '{$user_id}',`u_code` = '0' WHERE `u_name` = '{$args[1]}'");
 
         $vk->sendMessage($user_id,"Вы успешно привязали профиль ВКонтакте к игровому аккаунту ✅");
     }
     unset($qdata);
     unset($squery);
+    exit;
+}
+else if($args[0] == '/unlink' && $args[1] != '' && is_numeric($args[2]) && $args[2] >= 100000 && $args[2] <= 999999)
+{
+    $sql_connection = mysqli_connect(HOST,USER,PASSWORD,DB);
+    mysqli_select_db($sql_connection,DB);
+
+    if (mysqli_connect_errno()) {
+        $vk->sendMessage($user_id,"Connection failed: " . mysqli_connect_error());
+        exit();
+    }
+
+    $squery = mysqli_query($sql_connection,"SELECT * FROM `vk_security` WHERE `u_name` = '{$args[1]}' LIMIT 1");
+
+    if(!mysqli_num_rows($squery))
+        exit;
+
+    $qdata = mysqli_fetch_row($squery);
+
+    if($qdata[1] != 0) {
+        if($args[1] == $qdata[2]) {
+            mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '0',`u_code` = '0' WHERE `u_name` = '{$args[1]}'");
+
+            $vk->sendMessage($user_id,"Вы успешно отвязали профиль ВКонтакте от своего игрового аккаунта 🚫");
+        }
+    }
+    exit;
+}
+else {
+    $vk->sendMessage($user_id,"Если Вы хотите привязать/отвязать профиль, используйте:\n\n/link [Игровой ник] [Код]\n/unlink [Игровой ник] [Код]");
+    exit;
 }
 
 // Functions
