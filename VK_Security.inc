@@ -108,7 +108,7 @@ static_enum {
 
 // _pawnraknet part
 
-#if defined PAWNRAKNET_INC_
+#if defined PAWNRAKNET_INC_ && PAWNRAKNET_INCLUDE_VERSION >= 140
     const ORPC_SetPlayerName = 11;
 
     ORPC:ORPC_SetPlayerName ( playerid, BitStream:bs)
