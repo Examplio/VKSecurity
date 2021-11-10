@@ -21,7 +21,7 @@ Copyright (c) 2021 Viktor Kasko
 #if defined V_VERSION
     #undef V_VERSION
 #endif
-#define V_VERSION   (1) // VK SECURITY VERSION
+#define V_VERSION   (2) // VK SECURITY VERSION
 
 #if !defined _vk_security_lang_included
     #tryinclude <_vk_security_en.lang>
@@ -44,7 +44,7 @@ Copyright (c) 2021 Viktor Kasko
     #tryinclude <a_http>
 
     #if !defined HTTP
-        native HTTP(index, type, url[], data[], callback[]);
+        native HTTP(index, type, url[], data[], callback[] ) ;
     #endif
 #endif
 
@@ -66,36 +66,112 @@ Copyright (c) 2021 Viktor Kasko
     #define MAX_IP_LENGTH       16
 #endif
 
+// MySQL aspects
+
+#if !defined mysql_reconnect
+    static 
+        MySQL:g_vk_secturity_mysql_handle;
+
+    stock VK_SetMySQLHandle(MySQL:handle)
+    {
+        g_vk_secturity_mysql_handle = handle;
+        return 1;
+    }
+#else
+    #if defined cache_get_row_int
+        static 
+            g_vk_secturity_mysql_handle;
+
+        stock VK_SetMySQLHandle(handle)
+        {
+            g_vk_secturity_mysql_handle = handle;
+            return 1;
+        }
+    #endif
+#endif
 
 static
     static_VkActivated [ MAX_PLAYERS char ] = {0, ...},
     static_VK_ID [ MAX_PLAYERS ] = {0, ...},
-    static_Timer[MAX_PLAYERS char],
+    static_Timer [ MAX_PLAYERS ],
     static_name [ MAX_PLAYERS ] [ MAX_PLAYER_NAME ],
     static_ip [ MAX_PLAYERS ] [ MAX_IP_LENGTH ],
     static_VkType [ MAX_PLAYERS char ] = {0, ...};
 
 static_enum {
-    D_MAIN_PANEL,
+    D_MAIN_PANEL = 87912,
     D_VK_CONFIRMATION,
     D_VK_CONFIRMATION_1,
     D_VK_CONFIRMATION_DECLINE,
     D_VK_AUTH_WINDOW
 };
 
+// _pawnraknet part
+
+#if defined PAWNRAKNET_INC_
+    const ORPC_SetPlayerName = 11;
+
+    ORPC:ORPC_SetPlayerName ( playerid, BitStream:bs)
+    {
+        new 
+            raknet_playerId, 
+            raknet_nickname[MAX_PLAYER_NAME + 1];
+            
+        BS_ReadValue(bs, PR_UINT16, raknet_playerId, PR_STRING8, raknet_nickname, sizeof raknet_nickname ) ;
+
+        if( strcmp ( static_name [ raknet_playerId ] , raknet_nickname ) ) {
+
+            mysql_real_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
+
+            static const qString[] = "\
+                UPDATE `vk_security` SET `u_name` = '%s' WHERE `u_name` = '%s'"
+            ;
+
+            static
+                query_string [ sizeof qString + MAX_PLAYER_NAME + MAX_PLAYER_NAME + 2 ] ;
+
+            format ( query_string , sizeof ( query_string ) , qString , raknet_nickname , static_name [ raknet_playerId ] ) ;
+
+            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
+
+            format ( static_name [ raknet_playerId ] , sizeof ( static_name[] ) , raknet_nickname ) ;
+        }
+
+        return 1;
+    }
+#endif
+
 // Stocks
+
+stock VK_SetNewName ( playerid , n_Name[]) {
+
+    static const q_str[] = "\
+        UPDATE `vk_security` SET `u_name` = '%s' WHERE `u_name` = '%s'"
+    ;
+
+    static
+        vk_string [ sizeof q_str + (MAX_PLAYER_NAME * 2) + ( 1 + 1 ) ] ;
+
+    format(vk_string , sizeof ( vk_string ) , q_str , n_Name , static_name [ playerid ] ) ;
+
+    mysql_tquery ( g_vk_secturity_mysql_handle , vk_string , "" , "" ) ;
+
+    format ( static_name [ playerid ] , sizeof static_name [ ] , n_Name  ) ;
+
+    return 1;
+}
 
 stock VK_ShowMain ( playerid )  {
 
-    if(!static_VkActivated { playerid } )
-        return SendClientMessage(playerid,-1,DONT_HAVE);
+    if ( ! static_VkActivated { playerid } )
+        return SendClientMessage ( playerid,-1,DONT_HAVE ) ;
 
     static
         message_string[sizeof MAIN_PANEL_MSG + sizeof T_OPERATOR_TYPE_2];
     
     format(message_string,sizeof(message_string),MAIN_PANEL_MSG, 0 == static_VkType { playerid } ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2 ) ;
 
-    return ShowPlayerDialog(playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
+    return ShowPlayerDialog ( playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
 }
 
 stock VK_DEL_SESSION ( playerid )  {
@@ -105,48 +181,48 @@ stock VK_DEL_SESSION ( playerid )  {
 
     format(http_string, sizeof(http_string), "%s/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ] ) ;
 
-    return HTTP(playerid, 2, http_string, "", "");
+    return HTTP ( playerid, 2, http_string, "", "" ) ;
 }
 
 stock VK_ShowConfirmation( playerid ) {
 
     if( static_VkActivated { playerid } )
-        return SendClientMessage(playerid,-1,HAVE);
+        return SendClientMessage ( playerid,-1, HAVE ) ;
     
-    return ShowPlayerDialog(playerid,D_VK_CONFIRMATION,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,CONFIRMATION_MSGBOX,BUTTON_YES,BUTTON_NO);
+    return ShowPlayerDialog ( playerid,D_VK_CONFIRMATION,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,CONFIRMATION_MSGBOX,BUTTON_YES,BUTTON_NO ) ;
 }
 
 stock VK_ShowAuthWindow ( playerid ) {
     if( !static_VkActivated { playerid } )
-        return SendClientMessage(playerid,-1,DONT_HAVE);
+        return SendClientMessage( playerid , -1 , DONT_HAVE ) ;
 
     static
-        static_temp_ip[MAX_IP_LENGTH];
+        static_temp_ip [ MAX_IP_LENGTH ] ;
 
-    GetPlayerIp(playerid, static_temp_ip, MAX_IP_LENGTH);
+    GetPlayerIp ( playerid, static_temp_ip, MAX_IP_LENGTH ) ;
 
-    if(!strcmp( static_temp_ip, static_ip [ playerid ] ) && static_VkType { playerid } == 1)
+    if ( ! strcmp( static_temp_ip, static_ip [ playerid ] ) && static_VkType { playerid } == 1)
         return 0;
 
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
-    format(http_string, sizeof(http_string), "%s/_handler.php?name=%s&to=%d",DOMAIN,static_name [ playerid ], static_VK_ID [ playerid ]);
+    format(http_string, sizeof(http_string), "%s/_handler.php?name=%s&to=%d",DOMAIN,static_name [ playerid ], static_VK_ID [ playerid ] ) ;
 
-    HTTP(playerid, 2, http_string, "", "_Info");
+    HTTP ( playerid, 2, http_string, "", "_SendRequest" ) ;
 
-    return ShowPlayerDialog(playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"");
+    return ShowPlayerDialog ( playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"" ) ;
 }
 // some publics 
 
-public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
+public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
     switch(dialogid) {
         case D_VK_AUTH_WINDOW: {
-            return ShowPlayerDialog(playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"");
+            return ShowPlayerDialog ( playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"" ) ;
         }
         case D_MAIN_PANEL: {
-            if(!response)
+            if (!response)
                 return true;
             
             switch(listitem) {
@@ -156,7 +232,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                     return VK_ShowMain ( playerid ) ;
                 }
                 case 2: {
-                    if(!static_VkActivated { playerid })
+                    if ( ! static_VkActivated { playerid })
                         return 1;
                     
                     static 
@@ -165,7 +241,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
                     rand = random(999999-100000)+100000;
 
-                    format(message_string,sizeof(message_string),CONFIRMATION_DECLINE,rand);
+                    format(message_string,sizeof(message_string),CONFIRMATION_DECLINE,rand ) ;
 
                     static const qString[] = "\
                         UPDATE `vk_security` SET `u_code` = '%i' WHERE `u_name` = '%s'"
@@ -174,24 +250,18 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                     static
                         query_string[sizeof qString + MAX_PLAYER_NAME + 6];
 
-                    format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ] );
+                    format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ]  ) ;
 
-                    #if !defined mysql_reconnect
-                        mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
-                    #else
-                        #if defined cache_get_row_int
-                            mysql_tquery(1,query_string,"","");
-                        #endif
-                    #endif
+                    mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
 
                     dialog_decline:
 
-                    return ShowPlayerDialog(playerid,D_VK_CONFIRMATION_DECLINE,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO);
+                    return ShowPlayerDialog ( playerid,D_VK_CONFIRMATION_DECLINE,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
                 }
             }
         }
         case D_VK_CONFIRMATION_DECLINE: {
-            if(!response)
+            if ( ! response )
             {
                 static const qString[] = "\
                     UPDATE `vk_security` SET `u_code` = '0' WHERE `u_name` = '%s'"
@@ -200,17 +270,11 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                 static
                     query_string[sizeof qString + MAX_PLAYER_NAME];
 
-                format(query_string,sizeof(query_string),qString, static_name [ playerid ] );
+                format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
-                #if !defined mysql_reconnect
-                    mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
-                #else
-                    #if defined cache_get_row_int
-                        mysql_tquery(1,query_string,"","");
-                    #endif
-                #endif
+                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
 
-                return SendClientMessage(playerid,-1,DECLINE_SCM);
+                return SendClientMessage ( playerid,-1,DECLINE_SCM ) ;
             }
 
             static const qString[] = "\
@@ -220,20 +284,20 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             static
                 query_string[sizeof qString + MAX_PLAYER_NAME];
 
-            format(query_string,sizeof(query_string),qString, static_name [ playerid ] );
+            format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
             #if !defined mysql_reconnect
                 new
-                    Cache:qHandle = mysql_query(MYSQL_DEFAULT_HANDLE,query_string);
+                    Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
                 static
                     _uID;
                 
-                cache_get_value_name_int(0,!"u_userid",_uID);
+                cache_get_value_name_int(0,!"u_userid",_uID ) ;
                 
                 cache_delete ( qHandle ) ;
 
-                if(!_uID)
+                if ( ! _uID)
                 {
                     static_VkActivated { playerid } = 0;
 
@@ -241,7 +305,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
                     static_VkType { playerid } = 0;
 
-                    return SendClientMessage(playerid,-1,UNLINK);
+                    return SendClientMessage ( playerid,-1,UNLINK ) ;
 
                 } 
                 else {
@@ -253,16 +317,16 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             #else
                 #if defined cache_get_row_int
                     new
-                        Cache:qHandle = mysql_query(1,query_string);
+                        Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
                     static
                         _uID;
 
-                    _uID = cache_get_field_content_int(0,!"u_userid");
+                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
 
                     cache_delete ( qHandle ) ;
 
-                    if(!_uID)
+                    if ( ! _uID)
                     {
 
                         static_VkActivated { playerid } = 0;
@@ -271,7 +335,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
                         static_VkType { playerid } = 0;
 
-                        return SendClientMessage(playerid,-1,UNLINK);
+                        return SendClientMessage ( playerid,-1,UNLINK ) ;
 
                     } 
                     else {
@@ -283,7 +347,8 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             #endif
         }
         case D_VK_CONFIRMATION: {
-            if(!response)
+
+            if (!response)
                 return true;
 
             static 
@@ -292,7 +357,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 
             rand = random(999999-100000)+100000;
 
-            format(message_string,sizeof(message_string),CONFIRMATION_INPUT,rand);
+            format(message_string,sizeof(message_string),CONFIRMATION_INPUT,rand ) ;
 
             static const qString[] = "\
                 UPDATE `vk_security` SET `u_code` = '%i' WHERE `u_name` = '%s'"
@@ -301,22 +366,16 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             static
                 query_string[sizeof qString + MAX_PLAYER_NAME + 6];
 
-            format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ] );
+            format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ]  ) ;
             
-            #if !defined mysql_reconnect
-                mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
-            #else
-                #if defined cache_get_row_int
-                    mysql_tquery(1,query_string,"","");
-                #endif
-            #endif
+            mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
 
             d_dialog:
             
-            return ShowPlayerDialog(playerid,D_VK_CONFIRMATION_1,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO);
+            return ShowPlayerDialog ( playerid,D_VK_CONFIRMATION_1,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
         }
         case D_VK_CONFIRMATION_1: {
-            if(!response) {
+            if (!response) {
                 static const qString[] = "\
                     UPDATE `vk_security` SET `u_code` = '0',`u_userid` = '0' WHERE `u_name` = '%s'"
                 ;
@@ -324,15 +383,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                 static
                     query_string[sizeof qString + MAX_PLAYER_NAME];
 
-                format(query_string,sizeof(query_string),qString, static_name [ playerid ] );
+                format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
-                #if !defined mysql_reconnect
-                    mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
-                #else
-                    #if defined cache_get_row_int
-                        mysql_tquery(1,query_string,"","");
-                    #endif
-                #endif
+                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
 
                 return 1;
             }
@@ -344,18 +397,18 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             static
                 query_string[sizeof qString + MAX_PLAYER_NAME];
 
-            format(query_string,sizeof(query_string),qString, static_name [ playerid ] );
+            format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
             #if !defined mysql_reconnect
                 new
-                    Cache:qHandle = mysql_query(MYSQL_DEFAULT_HANDLE,query_string);
+                    Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
                 static
                     _uID;
                 
-                cache_get_value_name_int(0,!"u_userid",_uID);
+                cache_get_value_name_int(0,!"u_userid",_uID ) ;
 
-                if(!_uID)
+                if ( ! _uID)
                 {
                     cache_delete ( qHandle ) ;
 
@@ -373,14 +426,14 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
             #else
                 #if defined cache_get_row_int
                     new
-                        Cache:qHandle = mysql_query(1,query_string);
+                        Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
                     static
                         _uID;
 
-                    _uID = cache_get_field_content_int(0,!"u_userid");
+                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
 
-                    if(!_uID)
+                    if ( ! _uID)
                     {
                         cache_delete ( qHandle ) ;
 
@@ -397,35 +450,30 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
                 #endif
             #endif
 
-            SendClientMessage(playerid,-1,ACTIVATION_MSG);
+            SendClientMessage ( playerid,-1,ACTIVATION_MSG ) ;
 
             return cache_delete ( qHandle ) ;
         }
     }
 
     #if defined SECURITY_OnDialogResponse
-        return SECURITY_OnDialogResponse(playerid, dialogid, response, listitem, inputtext);
+        return SECURITY_OnDialogResponse ( playerid, dialogid, response, listitem, inputtext ) ;
     #endif
 }
 
 public OnGameModeInit()
 {
     #if defined SECURITY_OnGameModeInit
-        SECURITY_OnGameModeInit();
+        SECURITY_OnGameModeInit( ) ;
     #endif
+
+    mysql_tquery ( g_vk_secturity_mysql_handle, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", "","" ) ;
 
     print("-------------------------------------") ;
 	print("VK Security by Examplio loaded! ") ;
 	printf("Version: %i.0 ", V_VERSION) ;
 	print("-------------------------------------") ;
 
-    #if !defined mysql_reconnect
-        mysql_query(MYSQL_DEFAULT_HANDLE, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
-    #else
-        #if defined cache_get_row_int
-            mysql_query(1, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", false);
-        #endif
-    #endif
     return 1;
 }
 
@@ -436,23 +484,26 @@ public OnPlayerConnect ( playerid )
     #endif
 
     static
-        query_string[50 + MAX_PLAYER_NAME];  
+        query_string[64 + MAX_PLAYER_NAME + 55];  
 
-    GetPlayerName(playerid,  static_name [ playerid ] , MAX_PLAYER_NAME);
+    GetPlayerName ( playerid,  static_name [ playerid ] , MAX_PLAYER_NAME ) ;
 
-    format(query_string, sizeof(query_string), "SELECT * FROM `vk_security` WHERE `u_name` = '%s'",  static_name [ playerid ] );
+    format(query_string, sizeof(query_string), "\
+        SELECT * FROM `vk_security` WHERE `u_name` = '%s'",  
+        static_name [ playerid ] 
+     ) ;
 
     #if !defined mysql_reconnect
         new
-            Cache:qHandle = mysql_query(MYSQL_DEFAULT_HANDLE,query_string);
+            Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
         if(cache_num_rows()) {
 
-            cache_get_value_name_int(0,!"u_type",static_VkType { playerid });
+            cache_get_value_name_int(0,!"u_type",static_VkType { playerid } ) ;
 
-            cache_get_value_name_int(0,!"u_userid",static_VK_ID [ playerid ]);
+            cache_get_value_name_int(0,!"u_userid",static_VK_ID [ playerid ] ) ;
 
-            cache_get_value_name(0, !"u_ip", static_ip [ playerid ] , MAX_IP_LENGTH);
+            cache_get_value_name(0, !"u_ip", static_ip [ playerid ] , MAX_IP_LENGTH ) ;
             
             if(static_VK_ID [ playerid ] != 0)
                 static_VkActivated{playerid} = 1;
@@ -461,21 +512,21 @@ public OnPlayerConnect ( playerid )
             format(query_string,sizeof(query_string),"\
                 INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                 static_name [ playerid ] 
-            );
-            mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
+             ) ;
+            mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
         }
     #else
         #if defined cache_get_row_int
             new
-                Cache:qHandle = mysql_query(1,query_string);
+                Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
 
             if(cache_num_rows()) {
 
-                static_VkType { playerid } = cache_get_field_content_int(0,!"u_type");
+                static_VkType { playerid } = cache_get_field_content_int(0,!"u_type",g_vk_secturity_mysql_handle ) ;
 
-                static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid");
+                static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
 
-                cache_get_field_content(0, !"u_ip", static_ip [ playerid ] , 1 , MAX_IP_LENGTH);
+                cache_get_field_content(0, !"u_ip", static_ip [ playerid ] , 1 , MAX_IP_LENGTH ) ;
 
                 if(static_VK_ID [ playerid ] != 0)
                     static_VkActivated{playerid} = 1;
@@ -484,8 +535,8 @@ public OnPlayerConnect ( playerid )
                 format(query_string,sizeof(query_string),"\
                     INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                     static_name [ playerid ] 
-                );
-                mysql_tquery(1,query_string,"","");
+                 ) ;
+                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
             }
         #endif
     #endif
@@ -493,9 +544,9 @@ public OnPlayerConnect ( playerid )
     return cache_delete ( qHandle ) ;            
 }
 
-public OnPlayerDisconnect(playerid, reason) {
+public OnPlayerDisconnect ( playerid, reason) {
     #if defined SECURITY_OnPlayerDisconnect
-        SECURITY_OnPlayerDisconnect(playerid,reason);
+        SECURITY_OnPlayerDisconnect ( playerid,reason ) ;
     #endif
 
     VK_DEL_SESSION ( playerid ) ;
@@ -504,20 +555,14 @@ public OnPlayerDisconnect(playerid, reason) {
     static_VK_ID [ playerid ] = 0;
 
     static_VkActivated { playerid } = 0;
-    KillTimer ( static_Timer { playerid } ) ;
+    KillTimer ( static_Timer [ playerid ] ) ;
 
     static_name [ playerid ] [ 0 ] = EOS;
     static_ip [ playerid ] [ 0 ] = EOS;
 
-
     return 1;
 }
 
-// Forward`s
-forward SECURITY_OnPlayerDisconnect(playerid,reason);
-forward SECURITY_OnPlayerConnect ( playerid ) ;
-forward SECURITY_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
-forward SECURITY_OnGameModeInit();
 //Timer and HTTP receiver
 forward _RealTime_Info ( playerid ) ;
 public _RealTime_Info ( playerid )  {
@@ -525,20 +570,20 @@ public _RealTime_Info ( playerid )  {
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
-    format(http_string, sizeof(http_string), "%s/sessions/session%d.txt",DOMAIN, static_VK_ID [ playerid ]);
+    format(http_string, sizeof(http_string), "%s/sessions/session%d.txt",DOMAIN, static_VK_ID [ playerid ] ) ;
 
-    HTTP(playerid, 1, http_string, "", "_Info_");
+    HTTP ( playerid, 1, http_string, "", "_status_get" ) ;
 }
-forward _Info_(index, response_code, data[]);
-public _Info_(index, response_code, data[]) {
+forward _status_get(index, response_code, data[] ) ;
+public _status_get(index, response_code, data[]) {
 
     if(response_code >= 200 && response_code <= 299 && !strcmp(data,"1")) {
 
-        ShowPlayerDialog(index, -1, 0, " ", " ", " ", " "); // hide all dialogs
+        ShowPlayerDialog(index, -1, 0, " ", " ", " ", " " ) ; // hide all dialogs
 
-        SendClientMessage(index, -1, SUCESSFULLY_AUTH); // scm
+        SendClientMessage(index, -1, SUCESSFULLY_AUTH ) ; // scm
 
-        GetPlayerIp(index, static_ip [ index ], MAX_IP_LENGTH); // get ip
+        GetPlayerIp(index, static_ip [ index ], MAX_IP_LENGTH ) ; // get ip
 
         static const qString[] = "UPDATE `vk_security` SET `u_ip` = %s' WHERE `u_name` = '%s'";
 
@@ -547,38 +592,35 @@ public _Info_(index, response_code, data[]) {
 
         format(query_string,sizeof(query_string),qString, static_ip [ index ] , static_name [ index ] ) ;
 
-        #if !defined mysql_reconnect
-            mysql_tquery(MYSQL_DEFAULT_HANDLE,query_string,"","");
-        #else
-            #if defined cache_get_row_int
-                mysql_tquery(1,query_string,"","");
-            #endif
-        #endif
+        mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
 
-        VK_DEL_SESSION(index); // Delete a session
+        VK_DEL_SESSION(index ) ; // Delete a session
 
-        return KillTimer( static_Timer { index } ) ;
+        DeletePVar(index, !"VK_U_PVAR_STATUS" ) ;
+
+        return KillTimer( static_Timer [ index ] ) ;
     }
     else if(response_code >= 200 && response_code <= 299 && !strcmp(data,"-1")) {
 
-        SendClientMessage(index, -1, BLOCKED_AUTH);
+        SendClientMessage(index, -1, BLOCKED_AUTH ) ;
 
-        KillTimer( static_Timer { index } ) ;
+        KillTimer( static_Timer [ index ] ) ;
 
-        VK_DEL_SESSION(index);
+        VK_DEL_SESSION(index ) ;
 
-        return Kick(index);
+        return Kick(index ) ;
     }
     return 1;
 }
-forward _Info(index, response_code, data[]);
-public _Info(index, response_code, data[]) {
+forward _SendRequest(index, response_code, data[] ) ;
+public _SendRequest(index, response_code, data[]) {
 
     if(response_code >= 200 && response_code <= 299 && !strcmp(data,"ok")) {
 
-        static_Timer { index } = SetTimerEx("_RealTime_Info",700,1,"i",index);
+        static_Timer [ index ] = SetTimerEx("_RealTime_Info",700,1,"i",index ) ;
+        SetPVarInt(index,!"VK_U_PVAR_STATUS",1 ) ;
     }
-    else SendClientMessage(index,-1,IS_NOT_AVAILABLE);
+    else SendClientMessage(index,-1,IS_NOT_AVAILABLE ) ;
 }
 // Other
 
@@ -614,3 +656,10 @@ public _Info(index, response_code, data[]) {
 #endif
 
 #define OnDialogResponse SECURITY_OnDialogResponse
+
+// Forward`s
+
+forward SECURITY_OnPlayerDisconnect ( playerid,reason ) ;
+forward SECURITY_OnPlayerConnect ( playerid ) ;
+forward SECURITY_OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[] ) ;
+forward SECURITY_OnGameModeInit( ) ;
