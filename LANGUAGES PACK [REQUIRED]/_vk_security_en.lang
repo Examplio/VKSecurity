@@ -10,7 +10,7 @@
 #if defined VK_LANG_VERSION
 	#undef VK_LANG_VERSION
 #endif
-#define VK_LANG_VERSION	(1)
+#define VK_LANG_VERSION	(2)
 
 new
 	DIALOG_TITLE[] = !""VK_COLOR"VK Protection",
