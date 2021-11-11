@@ -99,47 +99,12 @@ static
     static_VkType [ MAX_PLAYERS char ] = {0, ...};
 
 static_enum {
-    D_MAIN_PANEL = 87912,
+    D_MAIN_PANEL = 20000,
     D_VK_CONFIRMATION,
     D_VK_CONFIRMATION_1,
     D_VK_CONFIRMATION_DECLINE,
     D_VK_AUTH_WINDOW
 };
-
-// _pawnraknet part
-
-#if defined PAWNRAKNET_INC_ && PAWNRAKNET_INCLUDE_VERSION >= 140
-    const ORPC_SetPlayerName = 11;
-
-    ORPC:ORPC_SetPlayerName ( playerid, BitStream:bs)
-    {
-        new 
-            raknet_playerId, 
-            raknet_nickname[MAX_PLAYER_NAME + 1];
-            
-        BS_ReadValue(bs, PR_UINT16, raknet_playerId, PR_STRING8, raknet_nickname, sizeof raknet_nickname ) ;
-
-        if( strcmp ( static_name [ raknet_playerId ] , raknet_nickname ) ) {
-
-            mysql_real_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
-
-            static const qString[] = "\
-                UPDATE `vk_security` SET `u_name` = '%s' WHERE `u_name` = '%s'"
-            ;
-
-            static
-                query_string [ sizeof qString + MAX_PLAYER_NAME + MAX_PLAYER_NAME + 2 ] ;
-
-            format ( query_string , sizeof ( query_string ) , qString , raknet_nickname , static_name [ raknet_playerId ] ) ;
-
-            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
-
-            format ( static_name [ raknet_playerId ] , sizeof ( static_name[] ) , raknet_nickname ) ;
-        }
-
-        return 1;
-    }
-#endif
 
 // Stocks
 
@@ -171,7 +136,9 @@ stock VK_ShowMain ( playerid )  {
     
     format(message_string,sizeof(message_string),MAIN_PANEL_MSG, 0 == static_VkType { playerid } ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2 ) ;
 
-    return ShowPlayerDialog ( playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
+    ShowPlayerDialog ( playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
+
+    return 1;
 }
 
 stock VK_DEL_SESSION ( playerid )  {
@@ -181,15 +148,19 @@ stock VK_DEL_SESSION ( playerid )  {
 
     format(http_string, sizeof(http_string), "%s/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ] ) ;
 
-    return HTTP ( playerid, 2, http_string, "", "" ) ;
+    HTTP ( playerid, 2, http_string, "", "" ) ;
+
+    return 1;
 }
 
 stock VK_ShowConfirmation( playerid ) {
 
     if( static_VkActivated { playerid } )
-        return SendClientMessage ( playerid,-1, HAVE ) ;
+        return SendClientMessage ( playerid , -1 , HAVE ) ;
     
-    return ShowPlayerDialog ( playerid,D_VK_CONFIRMATION,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,CONFIRMATION_MSGBOX,BUTTON_YES,BUTTON_NO ) ;
+    ShowPlayerDialog ( playerid,D_VK_CONFIRMATION,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,CONFIRMATION_MSGBOX,BUTTON_YES,BUTTON_NO ) ;
+
+    return 1;
 }
 
 stock VK_ShowAuthWindow ( playerid ) {
@@ -211,9 +182,10 @@ stock VK_ShowAuthWindow ( playerid ) {
 
     HTTP ( playerid, 2, http_string, "", "_SendRequest" ) ;
 
-    return ShowPlayerDialog ( playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"" ) ;
+    ShowPlayerDialog ( playerid,D_VK_AUTH_WINDOW,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,D_VK_WINDOW,SPECIAL_BUTTON,!"" ) ;
+
+    return 1;
 }
-// some publics 
 
 public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
@@ -226,7 +198,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
                 return true;
             
             switch(listitem) {
-                case 0: return VK_ShowMain ( playerid ) ;
+                case 0: VK_ShowMain ( playerid ) ;
                 case 1: {
                     static_VkType { playerid } = !static_VkType { playerid };
                     return VK_ShowMain ( playerid ) ;
@@ -368,13 +340,14 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
             format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ]  ) ;
             
-            mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
 
             d_dialog:
             
-            return ShowPlayerDialog ( playerid,D_VK_CONFIRMATION_1,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
+            ShowPlayerDialog ( playerid,D_VK_CONFIRMATION_1,DIALOG_STYLE_MSGBOX,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
         }
         case D_VK_CONFIRMATION_1: {
+
             if (!response) {
                 static const qString[] = "\
                     UPDATE `vk_security` SET `u_code` = '0',`u_userid` = '0' WHERE `u_name` = '%s'"
@@ -458,8 +431,20 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
     #if defined SECURITY_OnDialogResponse
         return SECURITY_OnDialogResponse ( playerid, dialogid, response, listitem, inputtext ) ;
+    #else
+        return 0;
     #endif
 }
+
+#if defined _ALS_OnDialogResponse
+	#undef OnDialogResponse
+#else
+	#define _ALS_OnDialogResponse
+#endif
+#define OnDialogResponse SECURITY_OnDialogResponse
+#if defined SECURITY_OnDialogResponse
+	forward SECURITY_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
+#endif
 
 public OnGameModeInit()
 {
@@ -476,6 +461,17 @@ public OnGameModeInit()
 
     return 1;
 }
+
+#if defined _ALS_OnGameModeInit
+    #undef OnGameModeInit
+#else
+    #define _ALS_OnGameModeInit
+#endif
+#define OnGameModeInit SECURITY_OnGameModeInit
+
+#if defined SECURITY_OnGameModeInit
+    forward SECURITY_OnGameModeInit( ) ;
+#endif
 
 public OnPlayerConnect ( playerid ) 
 {
@@ -544,6 +540,16 @@ public OnPlayerConnect ( playerid )
     return cache_delete ( qHandle ) ;            
 }
 
+#if defined _ALS_OnPlayerConnect
+    #undef OnPlayerConnect
+#else
+    #define _ALS_OnPlayerConnect
+#endif
+#define OnPlayerConnect SECURITY_OnPlayerConnect
+#if defined SECURITY_OnPlayerConnect
+    forward SECURITY_OnPlayerConnect ( playerid ) ;
+#endif
+
 public OnPlayerDisconnect ( playerid, reason) {
     #if defined SECURITY_OnPlayerDisconnect
         SECURITY_OnPlayerDisconnect ( playerid,reason ) ;
@@ -562,6 +568,17 @@ public OnPlayerDisconnect ( playerid, reason) {
 
     return 1;
 }
+
+#if defined _ALS_OnPlayerDisconnect
+    #undef OnPlayerDisconnect
+#else
+    #define _ALS_OnPlayerDisconnect
+#endif
+#define OnPlayerDisconnect SECURITY_OnPlayerDisconnect
+
+#if defined SECURITY_OnPlayerDisconnect
+    forward SECURITY_OnPlayerDisconnect ( playerid, reason ) ;
+#endif
 
 //Timer and HTTP receiver
 forward _RealTime_Info ( playerid ) ;
@@ -622,44 +639,36 @@ public _SendRequest(index, response_code, data[]) {
     }
     else SendClientMessage(index,-1,IS_NOT_AVAILABLE ) ;
 }
-// Other
 
-#if defined _ALS_OnPlayerDisconnect
-    #undef OnPlayerDisconnect
-#else
-    #define _ALS_OnPlayerDisconnect
+#if defined PAWNRAKNET_INC_ && PAWNRAKNET_INCLUDE_VERSION >= 140
+    const ORPC_SetPlayerName = 11;
+
+    ORPC:ORPC_SetPlayerName ( playerid, BitStream:bs)
+    {
+        new 
+            raknet_playerId, 
+            raknet_nickname[MAX_PLAYER_NAME + 1];
+            
+        BS_ReadValue(bs, PR_UINT16, raknet_playerId, PR_STRING8, raknet_nickname, sizeof raknet_nickname ) ;
+
+        if( strcmp ( static_name [ raknet_playerId ] , raknet_nickname ) ) {
+
+            mysql_real_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
+
+            static const qString[] = "\
+                UPDATE `vk_security` SET `u_name` = '%s' WHERE `u_name` = '%s'"
+            ;
+
+            static
+                query_string [ sizeof qString + MAX_PLAYER_NAME + MAX_PLAYER_NAME + 2 ] ;
+
+            format ( query_string , sizeof ( query_string ) , qString , raknet_nickname , static_name [ raknet_playerId ] ) ;
+
+            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
+
+            format ( static_name [ raknet_playerId ] , sizeof ( static_name[] ) , raknet_nickname ) ;
+        }
+
+        return 1;
+    }
 #endif
-
-#define OnPlayerDisconnect SECURITY_OnPlayerDisconnect
-
-#if defined _ALS_OnPlayerConnect
-    #undef OnPlayerConnect
-#else
-    #define _ALS_OnPlayerConnect
-#endif
-
-#define OnPlayerConnect SECURITY_OnPlayerConnect
-
-#if defined _ALS_OnGameModeInit
-    #undef OnGameModeInit
-#else
-    #define _ALS_OnGameModeInit
-#endif
-
-#define OnGameModeInit SECURITY_OnGameModeInit
-
-
-#if defined _ALS_OnDialogResponse
-    #undef OnDialogResponse
-#else
-    #define _ALS_OnDialogResponse
-#endif
-
-#define OnDialogResponse SECURITY_OnDialogResponse
-
-// Forward`s
-
-forward SECURITY_OnPlayerDisconnect ( playerid,reason ) ;
-forward SECURITY_OnPlayerConnect ( playerid ) ;
-forward SECURITY_OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[] ) ;
-forward SECURITY_OnGameModeInit( ) ;
