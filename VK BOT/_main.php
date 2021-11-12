@@ -4,10 +4,10 @@ require_once('_config.php');
 
 // MYSQL
 
-define("host","host_change_me"); // Host
-define("user","user_change_me"); // User
-define("password","password_change_me"); // Password
-define("db","DB_changeme"); // DB
+define("HOST","host_change_me"); // Host
+define("USER","user_change_me"); // User
+define("PASSWORD","password_change_me"); // Password
+define("DB","DB_changeme"); // DB
 
 if($user_id <= 0)
     exit;
