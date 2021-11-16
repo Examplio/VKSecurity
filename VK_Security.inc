@@ -654,9 +654,9 @@ public _SendRequest(index, response_code, data[]) {
         if( strcmp ( static_name [ raknet_playerId ] , raknet_nickname ) ) {
 
             #if !defined mysql_reconnect 
-                mysql_real_escape_string(raknet_nickname , raknet_nickname , sizeof raknet_nickname , g_vk_secturity_mysql_handle);
+                mysql_escape_string(raknet_nickname , raknet_nickname , sizeof raknet_nickname , g_vk_secturity_mysql_handle);
             #else
-                mysql_real_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
+                mysql_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
             #endif
 
             static const qString[] = "\
