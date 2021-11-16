@@ -95,8 +95,8 @@ static
     static_VK_ID [ MAX_PLAYERS ] = {0, ...},
     static_Timer [ MAX_PLAYERS ],
     static_name [ MAX_PLAYERS ] [ MAX_PLAYER_NAME ],
-    static_ip [ MAX_PLAYERS ] [ MAX_IP_LENGTH ],
-    static_VkType [ MAX_PLAYERS char ] = {0, ...};
+    static_VkType [ MAX_PLAYERS ] = {0, ...},
+    static_ip [ MAX_PLAYERS ] [ MAX_IP_LENGTH ];
 
 static_enum {
     D_MAIN_PANEL = 20000,
@@ -134,7 +134,7 @@ stock VK_ShowMain ( playerid )  {
     static
         message_string[sizeof MAIN_PANEL_MSG + sizeof T_OPERATOR_TYPE_2];
     
-    format(message_string,sizeof(message_string),MAIN_PANEL_MSG, 0 == static_VkType { playerid } ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2 ) ;
+    format(message_string,sizeof(message_string),MAIN_PANEL_MSG, 0 == static_VkType [ playerid ] ? T_OPERATOR_TYPE_1 : T_OPERATOR_TYPE_2 ) ;
 
     ShowPlayerDialog ( playerid,D_MAIN_PANEL,DIALOG_STYLE_LIST,DIALOG_TITLE,message_string,BUTTON_YES,BUTTON_NO ) ;
 
@@ -172,7 +172,7 @@ stock VK_ShowAuthWindow ( playerid ) {
 
     GetPlayerIp ( playerid, static_temp_ip, MAX_IP_LENGTH ) ;
 
-    if ( ! strcmp( static_temp_ip, static_ip [ playerid ] ) && static_VkType { playerid } == 1)
+    if ( ! strcmp( static_temp_ip, static_ip [ playerid ] ) && static_VkType [ playerid ] == 1)
         return 0;
 
     static
@@ -200,7 +200,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
             switch(listitem) {
                 case 0: VK_ShowMain ( playerid ) ;
                 case 1: {
-                    static_VkType { playerid } = !static_VkType { playerid };
+                    static_VkType [ playerid ] = !static_VkType [ playerid ];
                     return VK_ShowMain ( playerid ) ;
                 }
                 case 2: {
@@ -275,7 +275,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                     static_VK_ID [ playerid ] = 0;
 
-                    static_VkType { playerid } = 0;
+                    static_VkType [ playerid ] = 0;
 
                     return SendClientMessage ( playerid,-1,UNLINK ) ;
 
@@ -305,7 +305,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
                         
                         static_VK_ID [ playerid ] = 0;
 
-                        static_VkType { playerid } = 0;
+                        static_VkType [ playerid ] = 0;
 
                         return SendClientMessage ( playerid,-1,UNLINK ) ;
 
@@ -394,7 +394,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                 static_VK_ID [ playerid ] = _uID;
 
-                static_VkType { playerid } = 0;
+                static_VkType [ playerid ] = 0;
 
             #else
                 #if defined cache_get_row_int
@@ -419,7 +419,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                     static_VK_ID [ playerid ] = _uID;
 
-                    static_VkType { playerid } = 0;
+                    static_VkType [ playerid ] = 0;
                 #endif
             #endif
 
@@ -491,11 +491,11 @@ public OnPlayerConnect ( playerid )
 
     #if !defined mysql_reconnect
         new
-            Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+            Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle, query_string ) ;
 
         if(cache_num_rows()) {
 
-            cache_get_value_name_int(0,!"u_type",static_VkType { playerid } ) ;
+            cache_get_value_name_int(0,!"u_type",static_VkType [ playerid ] );
 
             cache_get_value_name_int(0,!"u_userid",static_VK_ID [ playerid ] ) ;
 
@@ -518,7 +518,7 @@ public OnPlayerConnect ( playerid )
 
             if(cache_num_rows()) {
 
-                static_VkType { playerid } = cache_get_field_content_int(0,!"u_type",g_vk_secturity_mysql_handle ) ;
+                static_VkType [ playerid ] = cache_get_field_content_int(0,!"u_type",g_vk_secturity_mysql_handle ) ;
 
                 static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
 
@@ -557,7 +557,7 @@ public OnPlayerDisconnect ( playerid, reason) {
 
     VK_DEL_SESSION ( playerid ) ;
 
-    static_VkType { playerid } = 0;
+    static_VkType [ playerid ] = 0;
     static_VK_ID [ playerid ] = 0;
 
     static_VkActivated { playerid } = 0;
