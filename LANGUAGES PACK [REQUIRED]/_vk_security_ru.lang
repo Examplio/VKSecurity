@@ -10,7 +10,7 @@
 #if defined VK_LANG_VERSION
 	#undef VK_LANG_VERSION
 #endif
-#define VK_LANG_VERSION	(2)
+#define VK_LANG_VERSION	(3)
 
 new
 	DIALOG_TITLE[] = !""VK_COLOR"Защита ВКонтакте",
@@ -21,14 +21,14 @@ new
         {00FF7F}+ {ffffff}Если хотите продолжить привязку нажмите \"Далее\"\n\
         В ином случае просто нажмите \"Отмена\"",
 	CONFIRMATION_INPUT[] = "{ffffff}Чтобы привязать Ваш профиль ВКонтакте к игровому аккаунту:\n\n\
-		{00FF7F}+ {ffffff}Введите ник и код: {ffcc00}%i {ffffff}\n\
+		{00FF7F}+ {ffffff}Введите /link ник и код: {ffcc00}%i {ffffff}\n\
 		в личные сообщения с нашей официальной группой, а после процедуры нужно нажать \"Далее\"\n\n\
-		Пример: Ivan_Ivanov 873211\n\
+		Пример: /link Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}Вводить свои данные следует именно в личные сообщения с сообществом",
 	CONFIRMATION_DECLINE[] = "{ffffff}Чтобы отвязать Ваш профиль ВКонтакте:\n\n\
-		{00FF7F}– {ffffff}Введите ник и код: {ffcc00}%i {ffffff}\n\
+		{00FF7F}– {ffffff}Введите /unlink ник и код: {ffcc00}%i {ffffff}\n\
 		в личные сообщения с нашей официальной группой, а после процедуры нужно нажать \"Далее\"\n\n\
-		Пример: Ivan_Ivanov 873211\n\
+		Пример: /unlink Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}Вводить свои данные следует именно в личные сообщения с сообществом",
 	BUTTON_YES[] = !"Далее",
 	BUTTON_NO[] = !"Отмена",

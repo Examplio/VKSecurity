@@ -1,10 +1,6 @@
-/*
-
-Description: VK Security System
-Author: Examplio
-MY VK: ( vk.com/example_text )
-Copyright (c) 2021 Viktor Kasko
-
+/**
+ * Written by Examplio with ❤
+ * VK: vk.com/vv.kasko
 */
 
 #if defined _vk_security_included
@@ -21,7 +17,7 @@ Copyright (c) 2021 Viktor Kasko
 #if defined V_VERSION
     #undef V_VERSION
 #endif
-#define V_VERSION   (2) // VK SECURITY VERSION
+#define V_VERSION   (3) // VK SECURITY VERSION
 
 #if !defined _vk_security_lang_included
     #tryinclude <_vk_security_en.lang>
@@ -96,6 +92,7 @@ static
     static_Timer [ MAX_PLAYERS ],
     static_name [ MAX_PLAYERS ] [ MAX_PLAYER_NAME ],
     static_VkType [ MAX_PLAYERS ] = {0, ...},
+    static_isLogged [ MAX_PLAYERS char ] = {0 , ...},
     static_ip [ MAX_PLAYERS ] [ MAX_IP_LENGTH ];
 
 static_enum {
@@ -107,6 +104,14 @@ static_enum {
 };
 
 // Stocks
+
+stock VK_IsConfirmed ( playerid ) {
+    return static_VK_ID [ playerid ] ? 1 : 0;
+}
+
+stock VK_isLogged ( playerid ) {
+    return (! static_isLogged { playerid } ) ? 0 : 1;
+}
 
 stock VK_SetNewName ( playerid , n_Name[]) {
 
@@ -146,7 +151,7 @@ stock VK_DEL_SESSION ( playerid )  {
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
-    format(http_string, sizeof(http_string), "%s/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ] ) ;
+    format(http_string, sizeof(http_string), "%s/client/receiver/_handler.php?to=%i&pid=-1",DOMAIN, static_VK_ID [ playerid ] ) ;
 
     HTTP ( playerid, 2, http_string, "", "" ) ;
 
@@ -178,7 +183,7 @@ stock VK_ShowAuthWindow ( playerid ) {
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
-    format(http_string, sizeof(http_string), "%s/_handler.php?name=%s&to=%d",DOMAIN,static_name [ playerid ], static_VK_ID [ playerid ] ) ;
+    format(http_string, sizeof(http_string), "%s/client/receiver/_handler.php?name=%s&to=%d",DOMAIN,static_name [ playerid ], static_VK_ID [ playerid ] ) ;
 
     HTTP ( playerid, 2, http_string, "", "_SendRequest" ) ;
 
@@ -502,7 +507,7 @@ public OnPlayerConnect ( playerid )
             cache_get_value_name(0, !"u_ip", static_ip [ playerid ] , MAX_IP_LENGTH ) ;
             
             if(static_VK_ID [ playerid ] != 0)
-                static_VkActivated{playerid} = 1;
+                static_VkActivated { playerid } = 1;
 
         } else {
             format(query_string,sizeof(query_string),"\
@@ -581,18 +586,18 @@ public OnPlayerDisconnect ( playerid, reason) {
 #endif
 
 //Timer and HTTP receiver
-forward _RealTime_Info ( playerid ) ;
-public _RealTime_Info ( playerid )  {
+forward _vk_Update ( playerid ) ;
+public _vk_Update ( playerid )  {
 
     static
         http_string[255 + 35 /* 255 - max domain length*/];
 
     format(http_string, sizeof(http_string), "%s/sessions/session%d.txt",DOMAIN, static_VK_ID [ playerid ] ) ;
 
-    HTTP ( playerid, 1, http_string, "", "_status_get" ) ;
+    HTTP ( playerid, 1, http_string, "", "_vk_getRequest" ) ;
 }
-forward _status_get(index, response_code, data[] ) ;
-public _status_get(index, response_code, data[]) {
+forward _vk_getRequest(index, response_code, data[] ) ;
+public _vk_getRequest(index, response_code, data[]) {
 
     if(response_code >= 200 && response_code <= 299 && !strcmp(data,"1")) {
 
@@ -609,23 +614,29 @@ public _status_get(index, response_code, data[]) {
 
         format(query_string,sizeof(query_string),qString, static_ip [ index ] , static_name [ index ] ) ;
 
-        mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+        mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
 
-        VK_DEL_SESSION(index ) ; // Delete a session
+        VK_DEL_SESSION ( index ) ; // Delete a session
 
         DeletePVar(index, !"VK_U_PVAR_STATUS" ) ;
 
-        return KillTimer( static_Timer [ index ] ) ;
+        static_isLogged { index } = 1;
+
+        #if defined VK_OnLoginDetected
+            VK_OnLoginDetected ( index );
+        #endif
+
+        return KillTimer ( static_Timer [ index ] ) ;
     }
     else if(response_code >= 200 && response_code <= 299 && !strcmp(data,"-1")) {
 
-        SendClientMessage(index, -1, BLOCKED_AUTH ) ;
+        SendClientMessage ( index, -1, BLOCKED_AUTH ) ;
 
         KillTimer( static_Timer [ index ] ) ;
 
-        VK_DEL_SESSION(index ) ;
+        VK_DEL_SESSION ( index ) ;
 
-        return Kick(index ) ;
+        return Kick ( index ) ;
     }
     return 1;
 }
@@ -634,8 +645,8 @@ public _SendRequest(index, response_code, data[]) {
 
     if(response_code >= 200 && response_code <= 299 && !strcmp(data,"ok")) {
 
-        static_Timer [ index ] = SetTimerEx("_RealTime_Info",700,1,"i",index ) ;
-        SetPVarInt(index,!"VK_U_PVAR_STATUS",1 ) ;
+        static_Timer [ index ] = SetTimerEx("_vk_Update",700,1,"i",index ) ;
+        SetPVarInt(index,!"VK_U_PVAR_STATUS",1) ;
     }
     else SendClientMessage(index,-1,IS_NOT_AVAILABLE ) ;
 }
