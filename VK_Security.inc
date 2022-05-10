@@ -1,5 +1,5 @@
 /**
- * Written by Examplio with ❤❤
+ * Written by Examplio with ❤
  * VK: vk.com/vv.kasko
 */
 
