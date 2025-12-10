@@ -43,7 +43,7 @@ class VK {
 
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_URL, "https://api.vk.com/method/" . $method);
+        curl_setopt($ch, CURLOPT_URL, "https://api.vk.ru/method/" . $method);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
