@@ -70,12 +70,14 @@ if($cmd == 'link') {
     $sql_connection = mysqli_connect(HOST,USER,PASSWORD,DB);
     mysqli_select_db($sql_connection,DB);
 
+    $name = mysqli_real_escape_string($sql_connection,$args[0]);
+
     if (mysqli_connect_errno()) {
         $vk -> reply ( $user_id , "Connection failed: " . mysqli_connect_error ( ) );
         exit;
     }
 
-    $squery = mysqli_query ( $sql_connection , "SELECT * FROM `vk_security` WHERE `u_name` = '{$args[0]}' LIMIT 1" );
+    $squery = mysqli_query ( $sql_connection , "SELECT * FROM `vk_security` WHERE `u_name` = '{$name}' LIMIT 1" );
 
     if(!mysqli_num_rows($squery))
         exit;
@@ -83,7 +85,7 @@ if($cmd == 'link') {
     $qdata = mysqli_fetch_row($squery);
 
     if($args[0] == $qdata[0] && $args[1] == $qdata[2]) {
-        mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '{$user_id}',`u_code` = '0' WHERE `u_name` = '{$args[0]}'");
+        mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '{$user_id}',`u_code` = '0' WHERE `u_name` = '{$name}'");
 
         $vk -> reply ( $user_id , "Вы успешно привязали профиль ВКонтакте к игровому аккаунту ✅" );
     }
@@ -109,7 +111,9 @@ if($cmd == 'unlink') {
         exit;
     }
 
-    $squery = mysqli_query ( $sql_connection , "SELECT * FROM `vk_security` WHERE `u_name` = '{$args[0]}' LIMIT 1" );
+    $name = mysqli_real_escape_string($sql_connection,$args[0]);
+
+    $squery = mysqli_query ( $sql_connection , "SELECT * FROM `vk_security` WHERE `u_name` = '{$name}' LIMIT 1" );
 
     if(!mysqli_num_rows ( $squery ))
         exit;
@@ -118,7 +122,7 @@ if($cmd == 'unlink') {
 
     if($qdata[1] != 0) {
         if($args[1] == $qdata[2]) {
-            mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '0',`u_code` = '0' WHERE `u_name` = '{$args[0]}'");
+            mysqli_query($sql_connection,"UPDATE `vk_security` SET `u_userid` = '0',`u_code` = '0' WHERE `u_name` = '{$name}'");
 
             $vk -> reply ( $user_id , "Вы успешно отвязали профиль ВКонтакте от своего игрового аккаунта 🚫" );
         }
