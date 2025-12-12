@@ -10,7 +10,11 @@
 #if defined VK_LANG_VERSION
 	#undef VK_LANG_VERSION
 #endif
+<<<<<<< HEAD
 #define VK_LANG_VERSION	(3)
+=======
+#define VK_LANG_VERSION	(4)
+>>>>>>> 0e802a0b5f32f461056b5867fb23d5ebf7536b7c
 
 new
 	DIALOG_TITLE[] = !""VK_COLOR"Защита ВКонтакте",

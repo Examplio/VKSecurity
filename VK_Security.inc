@@ -1,5 +1,5 @@
 /**
- * Written by Examplio with ❤
+ * Written by Examplio with вќ¤
  * VK: vk.com/vv.kasko
 */
 
@@ -17,7 +17,7 @@
 #if defined V_VERSION
     #undef V_VERSION
 #endif
-#define V_VERSION   (3) // VK SECURITY VERSION
+#define V_VERSION   (4)
 
 #if !defined _vk_security_lang_included
     #tryinclude <_vk_security_en.lang>
@@ -66,21 +66,21 @@
 
 #if !defined mysql_reconnect
     static 
-        MySQL:g_vk_secturity_mysql_handle;
+        MySQL:g_vk_security_mysql_handle;
 
     stock VK_SetMySQLHandle(MySQL:handle)
     {
-        g_vk_secturity_mysql_handle = handle;
+        g_vk_security_mysql_handle = handle;
         return 1;
     }
 #else
     #if defined cache_get_row_int
         static 
-            g_vk_secturity_mysql_handle;
+            g_vk_security_mysql_handle;
 
         stock VK_SetMySQLHandle(handle)
         {
-            g_vk_secturity_mysql_handle = handle;
+            g_vk_security_mysql_handle = handle;
             return 1;
         }
     #endif
@@ -124,7 +124,7 @@ stock VK_SetNewName ( playerid , n_Name[]) {
 
     format(vk_string , sizeof ( vk_string ) , q_str , n_Name , static_name [ playerid ] ) ;
 
-    mysql_tquery ( g_vk_secturity_mysql_handle , vk_string , "" , "" ) ;
+    mysql_tquery ( g_vk_security_mysql_handle , vk_string , "" , "" ) ;
 
     format ( static_name [ playerid ] , sizeof static_name [ ] , n_Name  ) ;
 
@@ -229,7 +229,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                     format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ]  ) ;
 
-                    mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+                    mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
 
                     dialog_decline:
 
@@ -249,7 +249,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                 format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
-                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+                mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
 
                 return SendClientMessage ( playerid,-1,DECLINE_SCM ) ;
             }
@@ -265,7 +265,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
             #if !defined mysql_reconnect
                 new
-                    Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+                    Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
 
                 static
                     _uID;
@@ -294,12 +294,12 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
             #else
                 #if defined cache_get_row_int
                     new
-                        Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+                        Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
 
                     static
                         _uID;
 
-                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
+                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_security_mysql_handle ) ;
 
                     cache_delete ( qHandle ) ;
 
@@ -345,7 +345,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
             format(query_string,sizeof(query_string),qString,rand, static_name [ playerid ]  ) ;
             
-            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
+            mysql_tquery ( g_vk_security_mysql_handle , query_string , "" , "" ) ;
 
             d_dialog:
             
@@ -363,7 +363,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
                 format(query_string,sizeof(query_string),qString, static_name [ playerid ]  ) ;
 
-                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+                mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
 
                 return 1;
             }
@@ -379,7 +379,7 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
 
             #if !defined mysql_reconnect
                 new
-                    Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+                    Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
 
                 static
                     _uID;
@@ -404,12 +404,12 @@ public OnDialogResponse ( playerid, dialogid, response, listitem, inputtext[]) {
             #else
                 #if defined cache_get_row_int
                     new
-                        Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+                        Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
 
                     static
                         _uID;
 
-                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
+                    _uID = cache_get_field_content_int(0,!"u_userid",g_vk_security_mysql_handle ) ;
 
                     if ( ! _uID)
                     {
@@ -457,7 +457,7 @@ public OnGameModeInit()
         SECURITY_OnGameModeInit( ) ;
     #endif
 
-    mysql_tquery ( g_vk_secturity_mysql_handle, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", "","" ) ;
+    mysql_tquery ( g_vk_security_mysql_handle, "CREATE TABLE IF NOT EXISTS `vk_security` (`u_name` varchar(24) NOT NULL UNIQUE,`u_userid` int(11) NOT NULL DEFAULT 0,`u_code` int(11) NOT NULL DEFAULT 0,`u_type` int(11) NOT NULL DEFAULT 0,`u_ip` varchar(16) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=cp1251;", "","" ) ;
 
     print("-------------------------------------") ;
 	print("VK Security by Examplio loaded! ") ;
@@ -496,7 +496,7 @@ public OnPlayerConnect ( playerid )
 
     #if !defined mysql_reconnect
         new
-            Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle, query_string ) ;
+            Cache:qHandle = mysql_query ( g_vk_security_mysql_handle, query_string ) ;
 
         if(cache_num_rows()) {
 
@@ -514,18 +514,18 @@ public OnPlayerConnect ( playerid )
                 INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                 static_name [ playerid ] 
              ) ;
-            mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+            mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
         }
     #else
         #if defined cache_get_row_int
             new
-                Cache:qHandle = mysql_query ( g_vk_secturity_mysql_handle,query_string ) ;
+                Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
 
             if(cache_num_rows()) {
 
-                static_VkType [ playerid ] = cache_get_field_content_int(0,!"u_type",g_vk_secturity_mysql_handle ) ;
+                static_VkType [ playerid ] = cache_get_field_content_int(0,!"u_type",g_vk_security_mysql_handle ) ;
 
-                static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid",g_vk_secturity_mysql_handle ) ;
+                static_VK_ID [ playerid ] = cache_get_field_content_int(0,!"u_userid",g_vk_security_mysql_handle ) ;
 
                 cache_get_field_content(0, !"u_ip", static_ip [ playerid ] , 1 , MAX_IP_LENGTH ) ;
 
@@ -537,7 +537,7 @@ public OnPlayerConnect ( playerid )
                     INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                     static_name [ playerid ] 
                  ) ;
-                mysql_tquery ( g_vk_secturity_mysql_handle,query_string,"","" ) ;
+                mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
             }
         #endif
     #endif
@@ -614,7 +614,7 @@ public _vk_getRequest(index, response_code, data[]) {
 
         format(query_string,sizeof(query_string),qString, static_ip [ index ] , static_name [ index ] ) ;
 
-        mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
+        mysql_tquery ( g_vk_security_mysql_handle , query_string , "" , "" ) ;
 
         VK_DEL_SESSION ( index ) ; // Delete a session
 
@@ -665,9 +665,9 @@ public _SendRequest(index, response_code, data[]) {
         if( strcmp ( static_name [ raknet_playerId ] , raknet_nickname ) ) {
 
             #if !defined mysql_reconnect 
-                mysql_escape_string(raknet_nickname , raknet_nickname , sizeof raknet_nickname , g_vk_secturity_mysql_handle);
+                mysql_escape_string(raknet_nickname , raknet_nickname , sizeof raknet_nickname , g_vk_security_mysql_handle);
             #else
-                mysql_escape_string(raknet_nickname , raknet_nickname , g_vk_secturity_mysql_handle , sizeof raknet_nickname);
+                mysql_escape_string(raknet_nickname , raknet_nickname , g_vk_security_mysql_handle , sizeof raknet_nickname);
             #endif
 
             static const qString[] = "\
@@ -679,7 +679,7 @@ public _SendRequest(index, response_code, data[]) {
 
             format ( query_string , sizeof ( query_string ) , qString , raknet_nickname , static_name [ raknet_playerId ] ) ;
 
-            mysql_tquery ( g_vk_secturity_mysql_handle , query_string , "" , "" ) ;
+            mysql_tquery ( g_vk_security_mysql_handle , query_string , "" , "" ) ;
 
             format ( static_name [ raknet_playerId ] , sizeof ( static_name[] ) , raknet_nickname ) ;
         }
