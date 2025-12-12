@@ -17,7 +17,7 @@
 #if defined V_VERSION
     #undef V_VERSION
 #endif
-#define V_VERSION   (4)
+#define V_VERSION (4)
 
 #if !defined _vk_security_lang_included
     #tryinclude <_vk_security_en.lang>
@@ -31,9 +31,6 @@
     #endif
 #endif
 
-#if (VK_LANG_VERSION != V_VERSION)
-    #error Update or install language pack(script) for current version to use VK SECURITY correctly. Check files _vk_security_ru.lang or _vk_security_en.lang (VK_Security.inc)
-#endif
 
 #if !defined HTTP
 
@@ -110,7 +107,7 @@ stock VK_IsConfirmed ( playerid ) {
 }
 
 stock VK_isLogged ( playerid ) {
-    return (! static_isLogged { playerid } ) ? 0 : 1;
+    return !static_isLogged { playerid } ? 0 : 1;
 }
 
 stock VK_SetNewName ( playerid , n_Name[]) {
@@ -478,28 +475,13 @@ public OnGameModeInit()
     forward SECURITY_OnGameModeInit( ) ;
 #endif
 
-public OnPlayerConnect ( playerid ) 
-{
-    #if defined SECURITY_OnPlayerConnect
-        SECURITY_OnPlayerConnect ( playerid ) ;
-    #endif
-
+forward VK_FindUserInDB ( playerid );
+public VK_FindUserInDB ( playerid ) {
     static
         query_string[64 + MAX_PLAYER_NAME + 55];  
-
-    GetPlayerName ( playerid,  static_name [ playerid ] , MAX_PLAYER_NAME ) ;
-
-    format(query_string, sizeof(query_string), "\
-        SELECT * FROM `vk_security` WHERE `u_name` = '%s'",  
-        static_name [ playerid ] 
-     ) ;
-
+        
     #if !defined mysql_reconnect
-        new
-            Cache:qHandle = mysql_query ( g_vk_security_mysql_handle, query_string ) ;
-
         if(cache_num_rows()) {
-
             cache_get_value_name_int(0,!"u_type",static_VkType [ playerid ] );
 
             cache_get_value_name_int(0,!"u_userid",static_VK_ID [ playerid ] ) ;
@@ -513,14 +495,11 @@ public OnPlayerConnect ( playerid )
             format(query_string,sizeof(query_string),"\
                 INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                 static_name [ playerid ] 
-             ) ;
-            mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
+            ) ;
+            mysql_tquery ( g_vk_security_mysql_handle,query_string, "","" ) ;
         }
     #else
         #if defined cache_get_row_int
-            new
-                Cache:qHandle = mysql_query ( g_vk_security_mysql_handle,query_string ) ;
-
             if(cache_num_rows()) {
 
                 static_VkType [ playerid ] = cache_get_field_content_int(0,!"u_type",g_vk_security_mysql_handle ) ;
@@ -536,13 +515,37 @@ public OnPlayerConnect ( playerid )
                 format(query_string,sizeof(query_string),"\
                     INSERT INTO `vk_security` (`u_name`) VALUES ('%s')",
                     static_name [ playerid ] 
-                 ) ;
-                mysql_tquery ( g_vk_security_mysql_handle,query_string,"","" ) ;
+                ) ;
+                mysql_tquery ( g_vk_security_mysql_handle,query_string, "","" ) ;
             }
         #endif
     #endif
+}
 
-    return cache_delete ( qHandle ) ;            
+public OnPlayerConnect ( playerid ) 
+{
+    #if defined SECURITY_OnPlayerConnect
+        SECURITY_OnPlayerConnect ( playerid ) ;
+    #endif
+
+    static
+        query_string[64 + MAX_PLAYER_NAME + 55];  
+
+    GetPlayerName ( playerid,  static_name [ playerid ] , MAX_PLAYER_NAME ) ;
+
+    format(query_string, sizeof(query_string), "\
+        SELECT * FROM `vk_security` WHERE `u_name` = '%s'",  
+        static_name [ playerid ] 
+    ) ;
+
+    // fix high load perfomance
+    #if !defined mysql_reconnect
+        mysql_tquery ( g_vk_security_mysql_handle, query_string, "VK_FindUserInDB", "i", playerid ) ;
+    #else
+        mysql_tquery ( g_vk_security_mysql_handle, query_string, "VK_FindUserInDB", "i", playerid ) ;
+    #endif
+
+    return 1;        
 }
 
 #if defined _ALS_OnPlayerConnect
