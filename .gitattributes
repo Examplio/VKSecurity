@@ -1,2 +1,3 @@
 *.lang text working-tree-encoding=CP1251
+*.inc text working-tree-encoding=CP1251
 *.inc linguist-language=Pawn
