@@ -26,13 +26,13 @@ new
 		For example: /link Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
 	CONFIRMATION_DECLINE[] = "{ffffff}To unlink your VK profile:\n\n\
-		{00FF7F}– {ffffff}Enter /unlink nickname and code: {ffcc00}%i {ffffff}\n\
+		{00FF7F}â€“ {ffffff}Enter /unlink nickname and code: {ffcc00}%i {ffffff}\n\
 		in private messages with our official group, and after the procedure you need to press \"Next\"\n\n\
 		For example: /unlink Ivan_Ivanov 873211\n\
 		{ff0000}[!] {ffffff}You should enter your data in private messages with the community. !!!",
 	BUTTON_YES[] = !"Next",
 	BUTTON_NO[] = !"Cancel",
-	MAIN_PANEL_MSG[] =  "{00FF7F}» {ffffff}Type: "VK_COLOR"%s\n{00FF7F}» {ffffff}Change protection type\n{ff0000}» {ffffff}Disable protection",
+	MAIN_PANEL_MSG[] =  "{00FF7F}Â» {ffffff}Type: "VK_COLOR"%s\n{00FF7F}Â» {ffffff}Change protection type\n{ff0000}Â» {ffffff}Disable protection",
 	IS_NOT_AVAILABLE[] = !"The connection to the intermediate server is interrupted or unavailable. Inform the administration!",
 	T_OPERATOR_TYPE_1[] = "Always ask",
 	T_OPERATOR_TYPE_2[] = "Prompt when changing IP address",
@@ -41,7 +41,7 @@ new
 	DECLINE_SCM[] = !""VK_COLOR"VK | {ffffff}You have successfully canceled this action",
 	UNLINK[] = !""VK_COLOR"VK | {ffffff}You have successfully unlinked your account!",
 	HAVE[] = !""VK_COLOR"VK | {ffffff}You have already confirmed the protection of VK",
-	SPECIAL_BUTTON[] = !"ÎÊ",
+	SPECIAL_BUTTON[] = !"ÐžÐš",
 	SUCESSFULLY_AUTH[] = !""VK_COLOR"VK | {ffffff}You have confirmed login to your account and logged in successfully",
 	BLOCKED_AUTH[] = !""VK_COLOR"VK | {ffffff}The login was blocked by the account owner, the session was dropped.",
-	D_VK_WINDOW[] = !"{0099CC}VK Security{ffffff} – a system that is aimed at ensuring the security of your account.\n\nConfirm the entry by clicking the corresponding button in the dialog with the group.\n(The dialog will close automatically after confirmation)";
+	D_VK_WINDOW[] = !"{0099CC}VK Security{ffffff} â€“ a system that is aimed at ensuring the security of your account.\n\nConfirm the entry by clicking the corresponding button in the dialog with the group.\n(The dialog will close automatically after confirmation)";
